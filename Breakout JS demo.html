@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>Breakout JS demo</title>
     <style>
-    	* { padding: 0; margin: 0; }
-    	canvas { background: #eee; display: block; margin: 0 auto; }
+        * { padding: 0; margin: 0; }
+        canvas { background: #eee; display: block; margin: 0 auto; }
     </style>
 </head>
 <body>
@@ -14,192 +14,192 @@
 <canvas id="myCanvas" width="480" height="320"></canvas>
 
 <script>
-	//JavaScript code goes here
-	var canvas = document.getElementById("myCanvas"); //get reference to canvas
-	var ctx = canvas.getContext("2d"); //provide 2D rendering context - tool to draw on canvas
-	var ballX = canvas.width/2; //x coordinate of ball center - horizontal center of screen
-	var ballY = canvas.height-30; //y coordinate of ball center - a little above bottom of screen
-	var ballRadius = 10; //radius of ball
-	
-	var dx = 2; //at start, go right along x-axis
-	var dy = -2; //at start, go up along y-axis
-	
-	var paddleHeight = 10; //height of paddle
-	var paddleWidth = 75; //width of paddle
-	var paddleX = (canvas.width-paddleWidth)/2; //bottom center of screen
-	
-	var rightPressed = false; //right arrow key
-	var leftPressed = false; //left arrow key
-	
-	var brickRowCount = 3; //no. of rows of bricks
-	var brickColumnCount = 5; //no. of columns of bricks
-	var brickWidth = 75; //width of a brick
-	var brickHeight = 20; //height of a brick
-	var brickPadding = 10; //padding between bricks so they don't touch each other
-	var brickOffsetTop = 30; //offset between brick and top edge so that bricks don't start from top edge
-	var brickOffsetLeft = 30; //offset between brick and right edge so that bricks don't start from left edge
-	var bricks = []; //2D array of bricks
-	
-	var score = 0;
-	
-	//initialise bricks
-	for(c=0; c<brickColumnCount; c++) {
-		bricks[c] = [];
-		for(r=0; r<brickRowCount; r++) {
-			bricks[c][r] = { x: 0, y: 0, hit: 0 }; //hit 0 - show brick; hit 1 - hide brick
-		}
-	}
-	
-	//event listeners for keydown and keyup events
-	document.addEventListener("keydown", keyDownHandler);
-	document.addEventListener("keyup", keyUpHandler);
-	document.addEventListener("mousemove", mouseMoveHandler, false);
-	
-	function keyDownHandler(e) {
-		if(e.keyCode == 39) { //right key pressed
-			rightPressed = true;
-		}
-		else if(e.keyCode == 37) { //left key presed
-			leftPressed = true;
-		}
-	}
-	
-	function keyUpHandler(e) {
-		if(e.keyCode == 39) { //right key released
-			rightPressed = false;
-		}
-		else if(e.keyCode == 37) { //left key released
-			leftPressed = false;
-		}
-	}
-	
-	function mouseMoveHandler(e) {
-		if(e.clientX > 0 && e.clientX < canvas.width) { //mouse movement is within canvas
-			paddleX = e.clientX - paddleWidth/2; //move paddle (make movement relative to middle of paddle)
-		}
-	}
-	
-	//call all drawing functions from here - keep code clean
-	function draw() {
-		ctx.clearRect(0, 0, canvas.width, canvas.height); //clear canvas - x and y of top left and of bottom right corner of rectangle to clear
-	
-		drawBall();
-		drawPaddle();
-		drawBricks();
-		drawScore();
-		
-		collisionDetection();
-		
-		ballX += dx; //increment x coordinate
-		ballY += dy; //increment y coordinate
-		
-		//if ball is going down and goes beyond bottom edge
-		//OR if ball is going up and goes beyond top edge
-		if (ballY + dy < ballRadius) { //ball hits top edge
-			dy = -dy;
-		} else if (ballY + dy > canvas.height-ballRadius) { //ball hits bottom edge
-			if (ballX > paddleX && ballX < paddleX + paddleWidth) { //ball hits paddle
-				dy = -dy; //bounce ball up
-			}
-			else { //ball does not hit paddle
-				alert("GAME OVER"); //output game over message
-				document.location.reload(); //restart game
-			}
-		}
-		
-		//if ball is going right and goes beyond right edge
-		//OR if ball is going left and goes beyond left edge
-		if(ballX + dx > canvas.width - ballRadius || ballX + dx < ballRadius) {
-			dx = -dx; //make ball go left if it was going right OR left if it was going right
-		}
-		
-		if(rightPressed && paddleX < canvas.width-paddleWidth) {  //right arrow pressed
-			paddleX += 7; //move paddle to right by 7 pixels
-		}
-		else if(leftPressed && paddleX > 0) { //left arrow pressed
-			paddleX -= 7; //move paddle to left by 7 pixels
-		}
-		
-		if(score == brickRowCount*brickColumnCount) {
-			alert("YOU WIN, CONGRATULATIONS!"); //output win message
-			document.location.reload(); //restart game
-		}
-		
-		requestAnimationFrame(draw); //call draw function on next frame
-	}
-	
-	function drawBall() {
-		ctx.beginPath(); //begins drawing path
-		ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2); //draw circle - x and y coordinates of ball center, radius, start angle (where to start drawing) and end angle in radians
-		ctx.fillStyle = "blue"; //colour for fill()
-		ctx.fill();
-		ctx.closePath(); //ends drawing path
-	}
-	
-	function drawPaddle() {
-		ctx.beginPath();
-		//x and y coordinate of top left corner of rectangle, width, height
-		ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight); 
-		ctx.fillStyle = "blue";
-		ctx.fill();
-		ctx.closePath();
-	}
-	
-	function drawScore() {
-		ctx.font = "16px Arial"; //font of score text
-		ctx.fillStyle = "blue"; //colour of score text
-		ctx.fillText("Score: "+ score, 8, 20); //score text and position of score text
-	}
-	
-	function drawBricks() {
-		for(c=0; c<brickColumnCount; c++) { //go through each column
-			for(r=0; r<brickRowCount; r++) { //go through each row of that column
-				if(bricks[c][r].hit == 0) { //brick is not hit, draw brick
-				
-					//calculate x and y coordinates of top left corner of brick
-					var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
-					var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
-					
-					//set brick's x and y coordinates
-					bricks[c][r].x = brickX;
-					bricks[c][r].y = brickY;
-					
-					//draw brick!
-					ctx.beginPath();
-					ctx.rect(brickX, brickY, brickWidth, brickHeight);
-					ctx.fillStyle = "blue";
-					ctx.fill();
-					ctx.closePath();
-				}
-			}
-		}
-	}
-	
-	function collisionDetection() {
-	
-		//loop through brick field
-		for(c=0; c<brickColumnCount; c++) {
-			for(r=0; r<brickRowCount; r++) {
-				var brick = bricks[c][r]; //for each brick
-				if (brick.hit == 0) { //brick not yet hit, therefore visible
-				
-					//center of ball is within brick
-					if(ballX > brick.x //center of ball is after left edge
-						&& ballX < brick.x+brickWidth //center of ball is before right edge
-						&& ballY > brick.y //center of ball is below top edge
-						&& ballY < brick.y+brickHeight) { //center of ball is above bottom edge
-						
-						dy = -dy; //ball bounces off brick
-						brick.hit = 1; //brick is hit, brick must be destroyed
-						score++;
-					}
-				}
-			}
-		}
-	}
-	
-	draw(); //call draw function!
-	
+    //JavaScript code goes here
+    var canvas = document.getElementById("myCanvas"); //get reference to canvas
+    var ctx = canvas.getContext("2d"); //provide 2D rendering context - tool to draw on canvas
+    var ballX = canvas.width/2; //x coordinate of ball center - horizontal center of screen
+    var ballY = canvas.height-30; //y coordinate of ball center - a little above bottom of screen
+    var ballRadius = 10; //radius of ball
+    
+    var dx = 2; //at start, go right along x-axis
+    var dy = -2; //at start, go up along y-axis
+    
+    var paddleHeight = 10; //height of paddle
+    var paddleWidth = 75; //width of paddle
+    var paddleX = (canvas.width-paddleWidth)/2; //bottom center of screen
+    
+    var rightPressed = false; //right arrow key
+    var leftPressed = false; //left arrow key
+    
+    var brickRowCount = 3; //no. of rows of bricks
+    var brickColumnCount = 5; //no. of columns of bricks
+    var brickWidth = 75; //width of a brick
+    var brickHeight = 20; //height of a brick
+    var brickPadding = 10; //padding between bricks so they don't touch each other
+    var brickOffsetTop = 30; //offset between brick and top edge so that bricks don't start from top edge
+    var brickOffsetLeft = 30; //offset between brick and right edge so that bricks don't start from left edge
+    var bricks = []; //2D array of bricks
+    
+    var score = 0;
+    
+    //initialise bricks
+    for(c=0; c<brickColumnCount; c++) {
+        bricks[c] = [];
+        for(r=0; r<brickRowCount; r++) {
+            bricks[c][r] = { x: 0, y: 0, hit: 0 }; //hit 0 - show brick; hit 1 - hide brick
+        }
+    }
+    
+    //event listeners for keydown and keyup events
+    document.addEventListener("keydown", keyDownHandler);
+    document.addEventListener("keyup", keyUpHandler);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+    
+    function keyDownHandler(e) {
+        if(e.keyCode == 39) { //right key pressed
+            rightPressed = true;
+        }
+        else if(e.keyCode == 37) { //left key presed
+            leftPressed = true;
+        }
+    }
+    
+    function keyUpHandler(e) {
+        if(e.keyCode == 39) { //right key released
+            rightPressed = false;
+        }
+        else if(e.keyCode == 37) { //left key released
+            leftPressed = false;
+        }
+    }
+    
+    function mouseMoveHandler(e) {
+        if(e.clientX > 0 && e.clientX < canvas.width) { //mouse movement is within canvas
+            paddleX = e.clientX - paddleWidth/2; //move paddle (make movement relative to middle of paddle)
+        }
+    }
+    
+    //call all drawing functions from here - keep code clean
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); //clear canvas - x and y of top left and of bottom right corner of rectangle to clear
+    
+        drawBall();
+        drawPaddle();
+        drawBricks();
+        drawScore();
+        
+        collisionDetection();
+        
+        ballX += dx; //increment x coordinate
+        ballY += dy; //increment y coordinate
+        
+        //if ball is going down and goes beyond bottom edge
+        //OR if ball is going up and goes beyond top edge
+        if (ballY + dy < ballRadius) { //ball hits top edge
+            dy = -dy;
+        } else if (ballY + dy > canvas.height-ballRadius) { //ball hits bottom edge
+            if (ballX > paddleX && ballX < paddleX + paddleWidth) { //ball hits paddle
+                dy = -dy; //bounce ball up
+            }
+            else { //ball does not hit paddle
+                alert("GAME OVER"); //output game over message
+                document.location.reload(); //restart game
+            }
+        }
+        
+        //if ball is going right and goes beyond right edge
+        //OR if ball is going left and goes beyond left edge
+        if(ballX + dx > canvas.width - ballRadius || ballX + dx < ballRadius) {
+            dx = -dx; //make ball go left if it was going right OR left if it was going right
+        }
+        
+        if(rightPressed && paddleX < canvas.width-paddleWidth) {  //right arrow pressed
+            paddleX += 7; //move paddle to right by 7 pixels
+        }
+        else if(leftPressed && paddleX > 0) { //left arrow pressed
+            paddleX -= 7; //move paddle to left by 7 pixels
+        }
+        
+        if(score == brickRowCount*brickColumnCount) {
+            alert("YOU WIN, CONGRATULATIONS!"); //output win message
+            document.location.reload(); //restart game
+        }
+        
+        requestAnimationFrame(draw); //call draw function on next frame
+    }
+    
+    function drawBall() {
+        ctx.beginPath(); //begins drawing path
+        ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2); //draw circle - x and y coordinates of ball center, radius, start angle (where to start drawing) and end angle in radians
+        ctx.fillStyle = "blue"; //colour for fill()
+        ctx.fill();
+        ctx.closePath(); //ends drawing path
+    }
+    
+    function drawPaddle() {
+        ctx.beginPath();
+        //x and y coordinate of top left corner of rectangle, width, height
+        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight); 
+        ctx.fillStyle = "blue";
+        ctx.fill();
+        ctx.closePath();
+    }
+    
+    function drawScore() {
+        ctx.font = "16px Arial"; //font of score text
+        ctx.fillStyle = "blue"; //colour of score text
+        ctx.fillText("Score: "+ score, 8, 20); //score text and position of score text
+    }
+    
+    function drawBricks() {
+        for(c=0; c<brickColumnCount; c++) { //go through each column
+            for(r=0; r<brickRowCount; r++) { //go through each row of that column
+                if(bricks[c][r].hit == 0) { //brick is not hit, draw brick
+                
+                    //calculate x and y coordinates of top left corner of brick
+                    var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+                    var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+                    
+                    //set brick's x and y coordinates
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    
+                    //draw brick!
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "blue";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+    
+    function collisionDetection() {
+    
+        //loop through brick field
+        for(c=0; c<brickColumnCount; c++) {
+            for(r=0; r<brickRowCount; r++) {
+                var brick = bricks[c][r]; //for each brick
+                if (brick.hit == 0) { //brick not yet hit, therefore visible
+                
+                    //center of ball is within brick
+                    if(ballX > brick.x //center of ball is after left edge
+                        && ballX < brick.x+brickWidth //center of ball is before right edge
+                        && ballY > brick.y //center of ball is below top edge
+                        && ballY < brick.y+brickHeight) { //center of ball is above bottom edge
+                        
+                        dy = -dy; //ball bounces off brick
+                        brick.hit = 1; //brick is hit, brick must be destroyed
+                        score++;
+                    }
+                }
+            }
+        }
+    }
+    
+    draw(); //call draw function!
+    
 </script>
 
 </body>
